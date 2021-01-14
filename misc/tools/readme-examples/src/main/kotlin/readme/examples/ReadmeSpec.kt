@@ -59,12 +59,12 @@ class ReadmeSpec : Spek({
     }
 
     test("ex-single") {
-        // two single assertions, only first evaluated
+        // two single expectations, only first evaluated
         expect(4 + 6).isLessThan(5).isGreaterThan(10)
     }
 
     test("ex-group") {
-        // assertion group with two assertions, both evaluated
+        // expectation group with two expectations, both evaluated
         expect(4 + 6) {
             isLessThan(5)
             isGreaterThan(10)
@@ -121,14 +121,14 @@ class ReadmeSpec : Spek({
 
     //@formatter:off
     test("ex-property-methods-group") {
-        expect(myPerson) { // forms an assertion group block
+        expect(myPerson) { // forms an expectation group block
 
-            feature({ f(it::firstName) }) { // forms an assertion group block
+            feature({ f(it::firstName) }) { // forms an expectation group block
                 startsWith("Pe")            // fails
                 endsWith("er")              // is evaluated nonetheless
             }                               // fails as a whole
 
-            // still evaluated, as it is in outer assertion group block
+            // still evaluated, as it is in outer expectation group block
             feature { f(it::lastName) }.toBe("Dummy")
         }
     }
@@ -167,7 +167,7 @@ class ReadmeSpec : Spek({
         feature(Pair<F, *>::first) { toBe(expected) }
     //snippet-within-funs-end
 
-    test("ex-within-assertion-functions") {
+    test("ex-within-expectation-functions") {
         //snippet-within-funs-insert
 
         expect(listOf(1 to "a", 2 to "b")).get(10) {
@@ -200,13 +200,13 @@ class ReadmeSpec : Spek({
     }
 
 
-    test("ex-type-assertions-1") {
-        //snippet-type-assertions-insert
+    test("ex-type-expectations-1") {
+        //snippet-type-expectations-insert
         expect(x).isA<SubType1>()
             .feature { f(it::number) }
             .toBe(2)
     }
-    test("ex-type-assertions-2") {
+    test("ex-type-expectations-2") {
         expect(x).isA<SubType2> {
             feature { f(it::word) }.toBe("goodbye")
             feature { f(it::flag) }.toBe(false)
@@ -215,14 +215,14 @@ class ReadmeSpec : Spek({
 })
 
 //@formatter:off
-//snippet-type-assertions-start
+//snippet-type-expectations-start
 interface SuperType
 
 data class SubType1(val number: Int) : SuperType
 data class SubType2(val word: String, val flag: Boolean) : SuperType
 
 val x: SuperType = SubType2("hello", flag = true)
-//snippet-type-assertions-end
+//snippet-type-expectations-end
 //@formatter:on
 
 object ReadmeSpec2 : Spek({
@@ -233,12 +233,12 @@ object ReadmeSpec2 : Spek({
     }
 
     test("ex-nullable-1") {
-        val slogan1: String? = "postulating assertions made easy"
+        val slogan1: String? = "postulating expectations made easy"
         expect(slogan1).toBe(null)
     }
     test("ex-nullable-2") {
         val slogan2: String? = null
-        expect(slogan2).toBe("postulating assertions made easy")
+        expect(slogan2).toBe("postulating expectations made easy")
     }
     val slogan2: String? = null
     test("ex-nullable-3") {
@@ -401,8 +401,8 @@ object ReadmeSpec2 : Spek({
                 1 to expectLambda<Char> { isLessThan('f') },
                 2 to expectLambda { toBe('c') },
                 3 to expectLambda { isGreaterThan('e') }
-            ).forEach { (arg, assertionCreator) ->
-                feature({ f(::myFun, arg) }, assertionCreator)
+            ).forEach { (arg, expectationCreator) ->
+                feature({ f(::myFun, arg) }, expectationCreator)
             }
         }
     }
@@ -422,8 +422,8 @@ object ReadmeSpec2 : Spek({
                 1 to expectLambda { toBe("1") },
                 2 to expectLambda { endsWith("2") },
                 Int.MAX_VALUE to expectLambda { toBe("max") }
-            ).forEach { (arg, assertionCreatorOrNull) ->
-                feature { f(::myNullableFun, arg) }.toBeNullIfNullGivenElse(assertionCreatorOrNull)
+            ).forEach { (arg, expectationCreatorOrNull) ->
+                feature { f(::myNullableFun, arg) }.toBeNullIfNullGivenElse(expectationCreatorOrNull)
             }
         }
     }
@@ -537,16 +537,16 @@ object OwnPerson : Spek({
     //@formatter:off
     test("ex-own-compose-5"){
         expect(Person("Susanne", "Whitley", 43, listOf(Person("Petra", "Whitley", 12, listOf()))))
-            .children { // using the fun -> assertion group, ergo sub-assertions don't fail fast
+            .children { // using the fun -> expectation group, ergo sub-expectations don't fail fast
                 none { feature { f(it::firstName) }.startsWith("Ro") }
                 all { feature { f(it::lastName) }.toBe("Whitley") }
             } // subject is still Person here
-            .apply { // only evaluated because the previous assertion group holds
-                children  // using the val -> subsequent assertions are about children and fail fast
+            .apply { // only evaluated because the previous expectation group holds
+                children  // using the val -> subsequent expectations are about children and fail fast
                     .hasSize(2)
                     .any { feature { f(it::age) }.isGreaterThan(18) }
             } // subject is still Person here due to the `apply`
-            .children // using the val -> subsequent assertions are about children and fail fast
+            .children // using the val -> subsequent expectations are about children and fail fast
             .hasSize(2)
     }
     //@formatter:on
@@ -592,8 +592,8 @@ data class Person(
 //snippet-children-start
 val Expect<Person>.children: Expect<Collection<Person>> get() = feature(Person::children)
 
-fun Expect<Person>.children(assertionCreator: Expect<Collection<Person>>.() -> Unit): Expect<Person> =
-    feature(Person::children, assertionCreator)
+fun Expect<Person>.children(expectationCreator: Expect<Collection<Person>>.() -> Unit): Expect<Person> =
+    feature(Person::children, expectationCreator)
 //snippet-children-end
 
 
@@ -601,21 +601,21 @@ object I18n : Spek({
 
     test("code-i18n-1") {
         fun Expect<Int>.isMultipleOf(base: Int): Expect<Int> =
-            createAndAddAssertion(DescriptionIntAssertion.IS_MULTIPLE_OF, base) { it % base == 0 }
+            createAndAddAssertion(DescriptionIntExpectation.IS_MULTIPLE_OF, base) { it % base == 0 }
 
-        //snippet-DescriptionIntAssertion-insert
+        //snippet-DescriptionIntExpectation-insert
     }
 
     test("code-i18n-2") {
         fun Expect<Int>.isEven(): Expect<Int> =
-            createAndAddAssertion(DescriptionBasic.IS, DescriptionIntAssertions.EVEN) { it % 2 == 0 }
+            createAndAddAssertion(DescriptionBasic.IS, DescriptionIntExpectations.EVEN) { it % 2 == 0 }
 
-        //snippet-DescriptionIntAssertions-insert
+        //snippet-DescriptionIntExpectations-insert
     }
 
     //snippet-i18n-3a-start
     fun AssertionContainer<Int>.isMultipleOf(base: Int): Assertion =
-        createDescriptiveAssertion(DescriptionIntAssertion.IS_MULTIPLE_OF, base) { it % base == 0 }
+        createDescriptiveAssertion(DescriptionIntExpectation.IS_MULTIPLE_OF, base) { it % base == 0 }
     //snippet-i18n-3a-end
 
     test("code-i18n-3a") {
@@ -637,18 +637,18 @@ object I18n : Spek({
     }
 })
 
-//snippet-DescriptionIntAssertion-start
-enum class DescriptionIntAssertion(override val value: String) : StringBasedTranslatable {
+//snippet-DescriptionIntExpectation-start
+enum class DescriptionIntExpectation(override val value: String) : StringBasedTranslatable {
     IS_MULTIPLE_OF("is multiple of")
 }
-//snippet-DescriptionIntAssertion-end
+//snippet-DescriptionIntExpectation-end
 
 
-//snippet-DescriptionIntAssertions-start
-enum class DescriptionIntAssertions(override val value: String) : StringBasedTranslatable {
+//snippet-DescriptionIntExpectations-start
+enum class DescriptionIntExpectations(override val value: String) : StringBasedTranslatable {
     EVEN("an even number")
 }
-//snippet-DescriptionIntAssertions-end
+//snippet-DescriptionIntExpectations-end
 
 object Faq : Spek({
     test("code-faq-1") {

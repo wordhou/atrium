@@ -89,7 +89,7 @@ interface Expect<T> : @kotlin.Suppress("DEPRECATION") SubjectProvider<T> {
      *
      * @return An [Expect] for the current subject of the assertion.
      */
-    //TODO 0.16.0 move to AssertionContainer and deprecate
+    //TODO 0.16.0 move to AssertionContainer and deprecate, update README
     fun createAndAddAssertion(description: String, expected: Any?, test: (T) -> Boolean): Expect<T> =
         createAndAddAssertion(Untranslatable(description), expected, test)
 
@@ -103,7 +103,7 @@ interface Expect<T> : @kotlin.Suppress("DEPRECATION") SubjectProvider<T> {
      *
      * @return An [Expect] for the current subject of the assertion.
      */
-    //TODO 0.16.0 move to AssertionContainer and deprecate
+    //TODO 0.16.0 move to AssertionContainer and deprecate, update README
     fun createAndAddAssertion(description: Translatable, expected: Any?, test: (T) -> Boolean): Expect<T> =
         addAssertion(assertionBuilder.createDescriptive(this, description, expected, test))
 }

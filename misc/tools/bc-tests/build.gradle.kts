@@ -30,7 +30,7 @@ val niokVersion: String by rootProject.extra
 val jupiterVersion: String by rootProject.extra
 val mockkVersion: String by rootProject.extra
 val junitPlatformVersion: String by rootProject.extra
-val spek2Version: String by rootProject.extra
+val spekVersion: String by rootProject.extra
 val jacocoToolVersion: String by rootProject.extra
 
 description =
@@ -168,7 +168,7 @@ bcConfigs.forEach { (oldVersion, apis, pair) ->
     configure(listOf(project(":bc-tests:$oldVersion-specs"))) {
         the<KotlinMultiplatformExtension>().apply {
             jvm()
-            // TODO 0.16.0 reactivate once we have transitioned everything to the new MPP plugin
+            // TODO 0.17.0 reactivate once we have transitioned everything to the new MPP plugin
 //            js().nodejs {}
             sourceSets {
                 val commonMain by getting {
@@ -176,7 +176,7 @@ bcConfigs.forEach { (oldVersion, apis, pair) ->
                         api(kotlin("stdlib-common"))
                         api(kotlin("reflect"))
                         api("io.mockk:mockk-common:$mockkVersion")
-                        api("org.spekframework.spek2:spek-dsl-metadata:$spek2Version")
+                        api("org.spekframework.spek2:spek-dsl-metadata:$spekVersion")
 
                         api(project(":atrium-verbs-internal-common"))
 
@@ -188,7 +188,7 @@ bcConfigs.forEach { (oldVersion, apis, pair) ->
                 val jvmMain by getting {
                     dependencies {
                         api("io.mockk:mockk:$mockkVersion")
-                        api("org.spekframework.spek2:spek-dsl-jvm:$spek2Version")
+                        api("org.spekframework.spek2:spek-dsl-jvm:$spekVersion")
                         api("ch.tutteli.spek:tutteli-spek-extensions:$spekExtensionsVersion")
                         api("ch.tutteli.niok:niok:$niokVersion")
 
@@ -199,11 +199,11 @@ bcConfigs.forEach { (oldVersion, apis, pair) ->
                         implementation(project(":atrium-fluent-en_GB-jvm"))
                     }
                 }
-                // TODO 0.16.0 reactivate once we have transitioned everything to the new MPP plugin
+                // TODO 0.17.0 reactivate once we have transitioned everything to the new MPP plugin
 //                val jsMain by getting {
 //                    dependencies {
 //                        api("io.mockk:mockk-dsl-js:$mockkVersion")
-//                        api("org.spekframework.spek2:spek-dsl-js:$spek2Version")
+//                        api("org.spekframework.spek2:spek-dsl-js:$spekVersion")
 //
 //                        api(project(":atrium-verbs-internal-js"))
 //
@@ -346,7 +346,7 @@ bcConfigs.forEach { (oldVersion, apis, pair) ->
 
             the<KotlinMultiplatformExtension>().apply {
 
-                // TODO 0.16.0 reactivate once we have transitioned everything to the new MPP plugin
+                // TODO 0.17.0 reactivate once we have transitioned everything to the new MPP plugin
 //                js().nodejs {}
 
                 jvm {
@@ -366,7 +366,7 @@ bcConfigs.forEach { (oldVersion, apis, pair) ->
                         // we want to run the samples as well
                         dependsOn(tasks.named("build"))
                     }
-                    //TODO 0.16.0 not yet sure if it makes more sense to include it into :check as well
+                    //TODO 0.17.0 not yet sure if it makes more sense to include it into :check as well
 //                    tasks.named("check").configure {
 //                        dependsOn(bcTest)
 //                    }
@@ -408,7 +408,7 @@ bcConfigs.forEach { (oldVersion, apis, pair) ->
 
                         }
                     }
-                    // TODO 0.16.0 reactivate once we have transitioned everything to the new MPP plugin
+                    // TODO 0.17.0 reactivate once we have transitioned everything to the new MPP plugin
 //                    val jsTest by getting {
 //                        dependencies {
 //                            implementation(project(":atrium-api-$apiName-js"))
@@ -471,7 +471,7 @@ fun Project.createJacocoReportTask(
             else -> throw IllegalStateException("re-adjust jacoco task")
         }
         projects.forEach {
-            //TODO 0.16.0 simplify once all project use new MPP plugin
+            //TODO 0.17.0 simplify once all project use new MPP plugin
             val sourceSetContainer = it.extensions.findByType<SourceSetContainer>()
             if (sourceSetContainer != null) {
                 sourceSets(sourceSetContainer["main"])
@@ -502,61 +502,6 @@ fun Project.createJacocoReportTask(
         finalizedBy(jacocoReport)
     }
     return jacocoReport
-}
-
-
-fun Project.configureTestTasks() {
-    fun memoizeTestFile(testTask: Test) =
-        project.file("${project.buildDir}/test-results/memoize-previous-state-${testTask.name}.txt")
-
-    tasks.withType<Test> {
-        testLogging {
-            events(
-                TestLogEvent.FAILED,
-                TestLogEvent.SKIPPED,
-                TestLogEvent.STANDARD_OUT,
-                TestLogEvent.STANDARD_ERROR
-            )
-            exceptionFormat = TestExceptionFormat.FULL
-            showExceptions = true
-            showCauses = true
-            showStackTraces = true
-        }
-        val testTask = this
-        addTestListener(object : TestListener {
-            override fun beforeSuite(suite: TestDescriptor) {}
-            override fun beforeTest(testDescriptor: TestDescriptor) {}
-            override fun afterTest(testDescriptor: TestDescriptor, result: TestResult) {}
-            override fun afterSuite(suite: TestDescriptor, result: TestResult) {
-                if (suite.parent == null) {
-                    if (result.testCount == 0L) {
-                        throw GradleException("No tests executed, most likely the discovery failed.")
-                    }
-                    println("Result: ${result.resultType} (${result.successfulTestCount} succeeded, ${result.failedTestCount} failed, ${result.skippedTestCount} skipped)")
-                    memoizeTestFile(testTask).writeText(result.resultType.toString())
-                }
-            }
-        })
-    }
-
-    tasks.withType<Test>().forEach { testTask ->
-        val failIfTestFailedLastTime =
-            tasks.register("fail-if-${testTask.name}-failed-last-time") {
-                doLast {
-                    if (!testTask.didWork) {
-                        val memoizeTestFile = memoizeTestFile(testTask)
-                        if (memoizeTestFile.exists() && memoizeTestFile.readText() == TestResult.ResultType.FAILURE.toString()) {
-                            val allTests = tasks.getByName("allTests") as TestReport
-                            throw GradleException(
-                                "test failed in last run, execute clean${testTask.name} to force its execution\n" +
-                                    "See the following report for more information:\nfile://${allTests.destinationDir}/index.html"
-                            )
-                        }
-                    }
-                }
-            }
-        testTask.finalizedBy(failIfTestFailedLastTime)
-    }
 }
 
 fun Project.rewriteFile(filePath: String, f: (String) -> String) {

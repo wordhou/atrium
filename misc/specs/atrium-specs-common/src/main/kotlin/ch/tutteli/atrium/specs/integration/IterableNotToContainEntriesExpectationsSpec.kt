@@ -23,6 +23,15 @@ abstract class IterableNotToContainEntriesExpectationsSpec(
     ) {})
 
     include(object : AssertionCreatorSpec<Iterable<Double>>(
+        describePrefix, emptyList<Double>().asIterable(),
+        *notToContainEntries.forAssertionCreatorSpec(
+            "$toBeGreaterThanDescr: 8.0",
+            "$toBeGreaterThanDescr: 10.0",
+            { toBeGreaterThan(8.0) }, arrayOf(expectLambda { toBeGreaterThan(10.0) })
+        )
+    ) {})
+
+    include(object : AssertionCreatorSpec<Iterable<Double>>(
         describePrefix, oneToSeven().toList().asIterable(),
         *notToContainEntries.forAssertionCreatorSpec(
             "$toBeGreaterThanDescr: 8.0",
@@ -94,6 +103,21 @@ abstract class IterableNotToContainEntriesExpectationsSpec(
                 }
             }
 
+            describe("fun `notToContain.entry/entries` with empty assertion creator lambda") {
+                it("throws AssertionError with exactly empty assertion creator hint") {
+                    expect {
+                        expect(oneToSeven()).notToContainFun({})
+                    }.toThrow<AssertionError> {
+                        message.toContain
+                            .exactly(1)
+                            .values(
+                                "at least one assertion defined: false",
+                                "You forgot to define assertions in the assertionCreator-lambda",
+                                "Sometimes you can use an alternative to `{ }` For instance, instead of `toThrow<..> { }` you should use `toThrow<..>()`"
+                            )
+                    }
+                }
+            }
             context("failing cases; search string at different positions") {
                 it("$toBeLessThanFun(4.0) throws AssertionError") {
                     expect {
